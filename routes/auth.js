@@ -3,11 +3,9 @@ const bcrypt = require('bcrypt');
 const User = require('../models/User');
 
 // IMPORT VALIDATION
-const { registerValidation } = require('../validation');
+const { registerValidation, loginValidation } = require('../validation');
 
-
-
-
+// REGISTRATION ROUTE
 router.post('/register', async (req, res) => {
 
   // validate user
@@ -38,5 +36,26 @@ router.post('/register', async (req, res) => {
     res.status(400).send(err);
   }
 });
+
+// LOGIN ROUTE
+router.post('/login', async (req,res) => {
+
+  const { error } = loginValidation(req.body);
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
+
+  const user = await User.findOne({ email: req.body.email });
+  if (!user) {
+    return res.status(400).send('Username or password is wrong');
+  }
+
+  const validPass = await bcrypt.compare(req.body.password, user.password);
+  if(!validPass) {
+    return res.status(400).send('Username or password is wrong');
+  }
+
+  res.send('Success');
+})
 
 module.exports = router;
